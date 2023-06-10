@@ -123,7 +123,7 @@ async def insert_quoter(quoter: QuoterModel):
 )
 async def create_sell(quoter: QuoterIdModel):
     try:
-        product = await gateway.create_sell(quoter)
+        sell = await gateway.create_sell(quoter)
     except (ElementNotFoundError, DBConnectionError) as e:
         log.error(f"Could not create the product: {e}")
         raise HTTPException(
@@ -138,7 +138,7 @@ async def create_sell(quoter: QuoterIdModel):
         )
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
-        content=product
+        content=sell
     )
 
 

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from app.entities.models import (
     QuoterDictModel,
     SellModel,
+    SellDictModel,
     QuoterModel,
     MessageType,
     QuoterIdModel
@@ -30,7 +31,7 @@ class Gateway(GatewayInterface):
     ) -> List[QuoterDictModel]:
         return await self.repository.search_quoter_by_content(content)
 
-    async def get_quoters(self) -> List[QuoterDictModel]:
+    async def get_quoters(self) -> List[QuoterModel]:
         return await self.repository.get_quoters()
 
     async def get_quoter(self, quoter_id: str) -> QuoterDictModel:
@@ -55,7 +56,7 @@ class Gateway(GatewayInterface):
         except ElementNotFoundError:
             if self.conf.stream_consume:
                 quoter_got = await self.repository.get_quoter(quoter_id)
-                quoter_model = QuoterDictModel(**quoter_got)
+                quoter_model = QuoterModel(**quoter_got)
                 new_quoter_data = quoter.dict(exclude_unset=True)
                 updated_quoter = quoter_model.copy(update=new_quoter_data)
                 quoter_type = MessageType.quoter
@@ -75,7 +76,7 @@ class Gateway(GatewayInterface):
             return updated_quoter
         raise SaleRelatedError("Sale is related to this quoter")
 
-    async def create_sell(self, quoter: QuoterIdModel):
+    async def create_sell(self, quoter: QuoterIdModel) -> SellDictModel:
         sell = SellModel(
             date=datetime.utcnow(),
             quoter_id=quoter.id.__str__()

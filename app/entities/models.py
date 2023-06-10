@@ -86,10 +86,15 @@ class ProducDictModel(TypedDict):
 
 class Client(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    name: str
-    location: str
-    email: str
-    phone_number: int
+    name: str = Field(...)
+    location: str = Field(...)
+    email: str = Field(...)
+    phone_number: int = Field(...)
+
+    class Config:
+        allow_population_by_field_name = True
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
 
 
 class QuoterModel(BaseModel):
@@ -160,6 +165,12 @@ class SellModel(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+class SellDictModel(TypedDict):
+    id: str
+    date: datetime
+    quoter_id: str
+
+
 class QuoterIdModel(BaseModel):
     id: PyObjectId
 
@@ -203,9 +214,12 @@ class ProductResponseSearchModel(TypedDict):
 
 class MessageType(Enum):
     quoter = "Quoter"
-    sell = "Sell"
+    sell = "Sale"
 
 
 class MessageFormat(BaseModel):
     type: str
     content: Union[SellModel, QuoterModel]
+
+    class Config:
+        arbitrary_types_allowed = True
