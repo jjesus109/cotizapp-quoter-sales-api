@@ -37,7 +37,7 @@ class Repository(RepositoryInterface):
 
     nosql_conn: AsyncIOMotorDatabase
     messaging_con: Producer
-    config: BaseSettings = Config()
+    conf: BaseSettings = Config()
 
     async def search_quoter_by_content(
         self,
@@ -50,38 +50,38 @@ class Repository(RepositoryInterface):
                 services_match,
                 products_match
             ) = await asyncio.gather(
-                self.nosql_conn["quoters"].find(
+                self.nosql_conn[self.conf.quoters_collec].find(
                     {
                         "name": {
                             "$regex": content,
                             "$options": "mxsi"
                         }
                     }
-                ).to_list(self.config.max_search_elements),
-                self.nosql_conn["quoters"].find(
+                ).to_list(self.conf.max_search_elements),
+                self.nosql_conn[self.conf.quoters_collec].find(
                     {
                         "description": {
                             "$regex": content,
                             "$options": "mxsi"
                         }
                     }
-                ).to_list(self.config.max_search_elements),
-                self.nosql_conn["quoters"].find(
+                ).to_list(self.conf.max_search_elements),
+                self.nosql_conn[self.conf.quoters_collec].find(
                     {
                         "services.name": {
                             "$regex": content,
                             "$options": "mxsi"
                         }
                     }
-                ).to_list(self.config.max_search_elements),
-                self.nosql_conn["quoters"].find(
+                ).to_list(self.conf.max_search_elements),
+                self.nosql_conn[self.conf.quoters_collec].find(
                     {
                         "products.title": {
                                 "$regex": content,
                                 "$options": "mxsi"
                         }
                     }
-                ).to_list(self.config.max_search_elements)
+                ).to_list(self.conf.max_search_elements)
             )
         except (ConnectionFailure, ExecutionTimeout):
             raise DBConnectionError(
@@ -95,8 +95,9 @@ class Repository(RepositoryInterface):
 
     async def get_quoters(self) -> List[QuoterDictModel]:
         try:
-            quoters = await self.nosql_conn["quoters"].find().to_list(
-                self.config.max_search_elements
+            quoters = await self.nosql_conn[self.conf.quoters_collec].find(
+            ).to_list(
+                self.conf.max_search_elements
             )
         except (ConnectionFailure, ExecutionTimeout):
             raise DBConnectionError(
@@ -110,7 +111,7 @@ class Repository(RepositoryInterface):
 
     async def get_quoter(self, quoter_id: str) -> QuoterDictModel:
         try:
-            quoter = await self.nosql_conn["quoters"].find_one(
+            quoter = await self.nosql_conn[self.conf.quoters_collec].find_one(
                 {"_id": quoter_id}
             )
         except (ConnectionFailure, ExecutionTimeout):
@@ -126,7 +127,7 @@ class Repository(RepositoryInterface):
     async def insert_quoter(self, quoter: QuoterModel) -> QuoterDictModel:
         quoter = jsonable_encoder(quoter)
         try:
-            await self.nosql_conn["quoters"].insert_one(quoter)
+            await self.nosql_conn[self.conf.quoters_collec].insert_one(quoter)
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert quoter in DB")
         return quoter
@@ -137,21 +138,24 @@ class Repository(RepositoryInterface):
             "$set": quoter.dict(exclude_unset=True)
         }
         try:
-            await self.nosql_conn["quoters"].update_one(query, values)
+            await self.nosql_conn[self.conf.quoters_collec].update_one(
+                query,
+                values
+            )
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not update quoter in DB")
 
     async def create_sell(self, sell: SellModel):
         sell = jsonable_encoder(sell)
         try:
-            await self.nosql_conn["sales"].insert_one(sell)
+            await self.nosql_conn[self.conf.sales_collec].insert_one(sell)
         except (ConnectionFailure, ExecutionTimeout):
             raise InsertionError("Could not insert quoter in DB")
         return sell
 
     async def find_sell_by_quoter(self, quoter_id: str):
         try:
-            quoter = await self.nosql_conn["sales"].find_one(
+            quoter = await self.nosql_conn[self.conf.sales_collec].find_one(
                 {"quoter_id": quoter_id}
             )
         except (ConnectionFailure, ExecutionTimeout):
@@ -173,7 +177,7 @@ class Repository(RepositoryInterface):
             type=_type.value,
             content=quoter_sell)
         self.messaging_con.produce(
-            self.config.kafka_topic,
+            self.conf.kafka_topic,
             message.json(encoder=str).encode("utf-8")
         )
         self.messaging_con.flush()

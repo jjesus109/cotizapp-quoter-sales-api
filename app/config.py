@@ -6,6 +6,8 @@ class Config(BaseSettings):
     client_secret: str
     mongodb_url: str
     mongo_db: str
+    sales_collec: str
+    quoters_collec: str
     stream_consume: bool
     kafka_server: str
     kafka_protocol: str
