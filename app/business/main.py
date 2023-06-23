@@ -70,6 +70,11 @@ async def search_quoter_by_content(content: Optional[str] = None):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not find a quoter"
         )
+    if not quoter:
+        raise HTTPException(
+            status_code=status.HTTP_204_NO_CONTENT,
+            detail="Could not find a quoter"
+        )
     return quoter
 
 
@@ -164,8 +169,7 @@ async def update_quoter(quoter_id: str, quoter: QuoterUpdateModel):
             detail="Could not update the quoter"
         )
     return JSONResponse(
-        status_code=status.HTTP_201_CREATED,
-        content=quoter
+        status_code=status.HTTP_204_NO_CONTENT,
     )
 
 
